@@ -1,0 +1,15 @@
+module com.example;
+
+import com.example;
+
+val x = 1;
+
+shape HasA = { `a };
+
+label `a: Int;
+
+val o = @{
+  `a = 1
+};
+
+fun f () {}
