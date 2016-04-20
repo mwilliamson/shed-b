@@ -14,16 +14,15 @@ importStmt: 'import' ( moduleIdentifier | qualifiedTypeReference ) ';' ;
 qualifiedTypeReference: ( moduleIdentifier '.' )? TypeIdentifier ;
 TypeIdentifier: Upper IdentifierChar* ;
 
-typeDef: '(' typeDef ')'
-       | typeReference
-       | structuralType
-       | typeDef '&' typeDef
-       | <assoc=right> typeDef '->' typeDef
-       ;
+typeDef
+  : '(' typeDef ')'
+  | typeReference
+  | structuralType
+  | typeDef '&' typeDef
+  | <assoc=right> typeDef '->' typeDef
+  ;
 typeReference: TypeIdentifier ;
 structuralType: '{' ( LabelIdentifier ',' )* LabelIdentifier ','?  '}' ;
-
-//functionType: structuralType '->' functionType | structuralType ;
 
 labelDecl: 'label' LabelIdentifier ':' typeDef ';' ;
 LabelIdentifier: Backtick Lower IdentifierChar* ;
@@ -38,15 +37,20 @@ functionDecl: 'fun' Identifier '(' parameters ')' '{' functionStatement* '}' ;
 parameters: ( ( parameter ',' )* parameter )? ;
 parameter: Identifier ':' typeDef ;
 
-expression: intLiteral | stringLiteral | structureLiteral ;
-intLiteral: Integer ;
+arguments: ( ( expression ',' )* expression )? ;
 
-// field access
-// fun invoke
-// structure composition
-// variable references
+expression
+  : intLiteral
+  | stringLiteral
+  | structureLiteral
+  | expression '.' Identifier
+  | expression '(' arguments ')'
+  | expression '&' expression
+  | expression ( '+' | '-' ) expression
+  | Identifier
+  ;
+intLiteral : Integer ;
 
-// structure declaration
 structureLiteral: '@{' ( ( field ',' )* field ','? )? '}' ;
 field: LabelIdentifier '=' expression ;
 
