@@ -7,11 +7,10 @@ functionStatement: variableDecl | expression ';' | 'return' expression ';' ;
 
 moduleDecl: 'module' moduleIdentifier ';' ;
 
-importStmt: 'import' ( moduleIdentifier | qualifiedTypeReference ) ';' ;
+importStmt: 'import' ( moduleIdentifier | qualifiedReference ) ';' ;
 
-// comments
-
-qualifiedTypeReference: ( moduleIdentifier '.' )? TypeIdentifier ;
+qualifiedReference: moduleIdentifier identifier ;
+identifier: TypeIdentifier | labelIdentifier | VariableIdentifier ;
 TypeIdentifier: Upper IdentifierChar* ;
 
 typeDef
@@ -21,21 +20,23 @@ typeDef
   | typeDef '&' typeDef
   | <assoc=right> typeDef '->' typeDef
   ;
-typeReference: TypeIdentifier ;
-structuralType: '{' ( LabelIdentifier ',' )* LabelIdentifier ','?  '}' ;
+typeReference: moduleIdentifier? TypeIdentifier ;
+structuralType: '{' ( labelReference ',' )* labelReference ','?  '}' ;
 
-labelDecl: 'label' LabelIdentifier ':' typeDef ';' ;
-LabelIdentifier: Backtick Lower IdentifierChar* ;
+labelReference : moduleIdentifier? labelIdentifier ;
+labelDecl: 'label' labelIdentifier ':' typeDef ';' ;
+labelIdentifier: '.' VariableIdentifier ;
 
 shapeDecl: 'shape' TypeIdentifier '=' typeDef ';' ;
 
-variableDecl: 'val' Identifier ( ':' typeDef )? '=' expression ';' ;
-Identifier: Lower IdentifierChar* ;
-moduleIdentifier: Identifier ( '.' Identifier )* ;
+variableReference: moduleIdentifier? VariableIdentifier ;
+variableDecl: 'val' VariableIdentifier ( ':' typeDef )? '=' expression ';' ;
+VariableIdentifier: Lower IdentifierChar* ;
+moduleIdentifier: '|' VariableIdentifier ( '.' VariableIdentifier )* '|' ;
 
-functionDecl: 'fun' Identifier '(' parameters ')' '{' functionStatement* '}' ;
+functionDecl: 'fun' VariableIdentifier '(' parameters ')' ':' typeDef '{' functionStatement* '}' ;
 parameters: ( ( parameter ',' )* parameter )? ;
-parameter: Identifier ':' typeDef ;
+parameter: VariableIdentifier ':' typeDef ;
 
 arguments: ( ( expression ',' )* expression )? ;
 
@@ -43,16 +44,27 @@ expression
   : intLiteral
   | stringLiteral
   | structureLiteral
-  | expression '.' Identifier
+  | variableReference
+  | expression labelReference
   | expression '(' arguments ')'
+  | '!' expression
   | expression '&' expression
+  | expression ( '*' | '/' ) expression
   | expression ( '+' | '-' ) expression
-  | Identifier
+  | expression ( '==' | '!=' ) expression
+  | '(' expression ')'
   ;
 intLiteral : Integer ;
 
 structureLiteral: '@{' ( ( field ',' )* field ','? )? '}' ;
-field: LabelIdentifier '=' expression ;
+field: labelReference '=' expression ;
+
+// comments
+
+// if x {
+//    return 4;
+// } else {
+// }
 
 stringLiteral: String ;
 String: '"' StringCharacters? '"' ;
@@ -61,7 +73,6 @@ fragment StringCharacter: ~["\\] | EscapeSequence ;
 fragment EscapeSequence: '\\' [btnfr"'\\] ;
 
 Integer: [0-9]+ ;
-fragment Backtick: '`' ;
 fragment Upper: [A-Z] ;
 fragment Lower: [a-z] ;
 fragment IdentifierChar: [a-zA-Z0-9_] ;

@@ -1,15 +1,17 @@
-module com.example;
+module |com.example|;
 
-import com.example;
+import |com.example|fn;
+import |com.example|.lbl;
+import |com.example|User;
 
 val x = 1;
 
-shape HasA = { `a };
+shape HasA = { .a };
 
-label `a: Int;
+label .a: Int;
 
 val o = @{
-  `a = 1
+  .a = 1
 };
 
-fun f () {}
+fun f () : Unit {}
