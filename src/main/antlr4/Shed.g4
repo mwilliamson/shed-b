@@ -3,7 +3,11 @@ grammar Shed;
 module: moduleDecl importStmt* moduleStatement* ;
 
 moduleStatement: variableDecl | functionDecl | shapeDecl | labelDecl ;
-functionStatement: variableDecl | expression ';' | 'return' expression ';' ;
+functionStatement
+  : variableDecl
+  | 'if' '(' expression ')' '{' functionStatement* '}' ( 'else' '{' functionStatement* '}' )?
+  | expression ';'
+  | 'return' expression ';' ;
 
 moduleDecl: 'module' moduleIdentifier ';' ;
 
@@ -21,7 +25,7 @@ typeDef
   | <assoc=right> typeDef '->' typeDef
   ;
 typeReference: moduleIdentifier? TypeIdentifier ;
-structuralType: '{' ( labelReference ',' )* labelReference ','?  '}' ;
+structuralType: '{' ( labelReference ',' )* labelReference ','? '}' ;
 
 labelReference : moduleIdentifier? labelIdentifier ;
 labelDecl: 'label' labelIdentifier ':' typeDef ';' ;
@@ -40,6 +44,8 @@ parameter: VariableIdentifier ':' typeDef ;
 
 arguments: ( ( expression ',' )* expression )? ;
 
+Comment: '//' ~[\n]* ( '\n' | EOF ) -> skip ;
+
 expression
   : intLiteral
   | stringLiteral
@@ -52,19 +58,13 @@ expression
   | expression ( '*' | '/' ) expression
   | expression ( '+' | '-' ) expression
   | expression ( '==' | '!=' ) expression
+  | 'if' '(' expression ')' expression ( 'else' expression )?
   | '(' expression ')'
   ;
 intLiteral : Integer ;
 
 structureLiteral: '@{' ( ( field ',' )* field ','? )? '}' ;
 field: labelReference '=' expression ;
-
-// comments
-
-// if x {
-//    return 4;
-// } else {
-// }
 
 stringLiteral: String ;
 String: '"' StringCharacters? '"' ;
