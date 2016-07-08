@@ -1,0 +1,24 @@
+module |fib|;
+
+label .first : Int;
+label .second : Int;
+
+// an incredible implementation of the fibonacci sequence
+fun fib(n: Int) : Int {
+    return fib2(n).second;
+}
+
+fun fib2(n: Int) : {.first, .second} {
+    if (n == 1) {
+        return @{
+            .first = 0,
+            .second = 1,
+        };
+    } else {
+        val previous = fib(n - 1);
+        return @{
+            .first = previous.second,
+            .second = previous.first + previous.second,
+        };
+    }
+}
