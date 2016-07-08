@@ -18,7 +18,7 @@ identifier: TypeIdentifier | labelIdentifier | VariableIdentifier ;
 TypeIdentifier: Upper IdentifierChar* ;
 
 typeDef
-  : '(' typeDef ')'
+  : '(' typeDef ')' // TODO: # <name>
   | typeReference
   | structuralType
   | typeDef '&' typeDef
@@ -33,7 +33,6 @@ labelIdentifier: '.' VariableIdentifier ;
 
 shapeDecl: 'shape' TypeIdentifier '=' typeDef ';' ;
 
-variableReference: moduleIdentifier? VariableIdentifier ;
 variableDecl: 'val' VariableIdentifier ( ':' typeDef )? '=' expression ';' ;
 VariableIdentifier: Lower IdentifierChar* ;
 moduleIdentifier: '|' VariableIdentifier ( '.' VariableIdentifier )* '|' ;
@@ -47,26 +46,27 @@ arguments: ( ( expression ',' )* expression )? ;
 Comment: '//' ~[\n]* ( '\n' | EOF ) -> skip ;
 
 expression
-  : intLiteral
-  | stringLiteral
-  | structureLiteral
-  | variableReference
-  | expression labelReference
-  | expression '(' arguments ')'
-  | '!' expression
-  | expression '&' expression
-  | expression ( '*' | '/' ) expression
-  | expression ( '+' | '-' ) expression
-  | expression ( '==' | '!=' ) expression
-  | 'if' '(' expression ')' expression ( 'else' expression )?
-  | '(' expression ')'
+  : Integer # intLiteral
+  | String # stringLiteral
+  | ( 'true' | 'false' ) # booleanLiteral
+  | '@{' ( ( field ',' )* field ','? )? '}' # structureLiteral
+  | moduleIdentifier? VariableIdentifier # variableReference
+  | expression labelReference # fieldAccess
+  | expression '(' arguments ')' # applyExpression
+  | 'not' expression # booleanNot
+  | '-' expression # numericNegate
+  | expression '&' expression # joinExpression
+  | expression ( '*' | '/' ) expression # numericOp2
+  | expression ( '+' | '-' ) expression # numericOp1
+  | expression ( '==' | '!=' ) expression # equality
+  | expression 'and' expression # booleanAnd
+  | expression 'or' expression # booleanOr
+  | 'if' '(' expression ')' expression ( 'else' expression )? # ifExpression
+  | '(' expression ')' # parentheses
   ;
-intLiteral : Integer ;
 
-structureLiteral: '@{' ( ( field ',' )* field ','? )? '}' ;
 field: labelReference '=' expression ;
 
-stringLiteral: String ;
 String: '"' StringCharacters? '"' ;
 fragment StringCharacters: StringCharacter+ ;
 fragment StringCharacter: ~["\\] | EscapeSequence ;
