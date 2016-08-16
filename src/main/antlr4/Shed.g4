@@ -18,14 +18,13 @@ identifier: TypeIdentifier | labelIdentifier | VariableIdentifier ;
 TypeIdentifier: Upper IdentifierChar* ;
 
 typeDef
-  : '(' typeDef ')' // TODO: # <name>
-  | typeReference
-  | structuralType
-  | typeDef '&' typeDef
-  | <assoc=right> typeDef '->' typeDef
+  : '(' inner=typeDef ')' # parenthesizedType
+  | qualifier=moduleIdentifier? name=TypeIdentifier # typeReference
+  | '{' ( labelReference ',' )* labelReference ','? '}' # structuralType
+  | left=typeDef '&' right=typeDef # joinType
+  // TODO: multi-arity function types
+  | <assoc=right> arg=typeDef '->' returnType=typeDef # functionType
   ;
-typeReference: moduleIdentifier? TypeIdentifier ;
-structuralType: '{' ( labelReference ',' )* labelReference ','? '}' ;
 
 labelReference : moduleIdentifier? labelIdentifier ;
 labelDecl: 'label' labelIdentifier ':' typeDef ';' ;

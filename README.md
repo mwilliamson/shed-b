@@ -32,10 +32,11 @@
 
       }
 
+      val foo = ...
       val x = y => @{
         `sent = now
-        `foo  = 1
-        `bar  = 2
+        `foo  = foo
+        `bar  = foo
       }
 
       val a = { `x = 1 }
@@ -237,6 +238,14 @@ list.map(f): List[Message & X]
 message: <sent>
 obj = {sent: now()}
 message & obj
+
+
+fun x (): { `a, ...b } {
+  if ... @{ `a = 1 } else @{ `a = 2, `b = 3 }
+}
+
+x() & { `b = 4 }
+
 
 # ANTLR Notes
 

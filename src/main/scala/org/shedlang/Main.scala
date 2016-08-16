@@ -3,6 +3,7 @@ package org.shedlang
 import org.shedlang.antlr._
 import org.antlr.v4.runtime._
 import org.antlr.v4.runtime.tree._
+import scala.collection.JavaConverters._
 
 object Main {
 
@@ -15,7 +16,7 @@ object Main {
     val lexer = new ShedLexer(stream)
     val tokens = new CommonTokenStream(lexer)
     val parser = new ShedParser(tokens)
-    val tree = parser.expression()
+    val tree = parser.typeDef()
     val ruleNames = parser.getRuleNames()
     val visitor = new MyVisitor()
 
@@ -24,6 +25,13 @@ object Main {
     // tree.toStringTree(parser)
 
     //(tree, visitor)
+  }
+
+  def parser(source: String) = {
+    val stream = new ANTLRInputStream(source)
+    val lexer = new ShedLexer(stream)
+    val tokens = new CommonTokenStream(lexer)
+    new ShedParser(tokens)
   }
 
   def printTree(ruleNames: Array[String], tree: Tree): Unit = {
@@ -98,7 +106,17 @@ object BinaryOperator {
   }
 }
 
+trait TypeDef extends Node
+
+case class QualifiedTypeReference(qualifier: String, name: String) extends TypeDef
+case class TypeReference(name: String) extends TypeDef
+case class JoinType(left: TypeDef, right: TypeDef) extends TypeDef
+case class FunctionType(arg: TypeDef, returns: TypeDef) extends TypeDef
+
 case class BinaryOperation(operator: BinaryOperator, left: Expression, right: Expression) extends Expression
+
+case class StructuralType(fields: Seq[LabelReference]) extends TypeDef
+case class LabelReference(name: String) extends Node
 
 class MyVisitor extends ShedVisitor[Node] {
 
@@ -123,15 +141,26 @@ class MyVisitor extends ShedVisitor[Node] {
   def visitFieldAccess(x$1: ShedParser.FieldAccessContext): Node = ???
   def visitFunctionDecl(x$1: ShedParser.FunctionDeclContext): Node = ???
   def visitFunctionStatement(x$1: ShedParser.FunctionStatementContext): Node = ???
+  def visitFunctionType(context: ShedParser.FunctionTypeContext): Node =
+    context.arg.accept(this) -> context.returnType.accept(this) match {
+      case (arg: TypeDef, returns: TypeDef) => FunctionType(arg, returns)
+      case _ => throw new Exception("Should not occur.")
+    }
   def visitIdentifier(x$1: ShedParser.IdentifierContext): Node = ???
   def visitIfExpression(x$1: ShedParser.IfExpressionContext): Node = ???
   def visitImportStmt(x$1: ShedParser.ImportStmtContext): Node = ???
   def visitIntLiteral(literal: ShedParser.IntLiteralContext): Node =
     IntegerLiteral(literal.getText().toInt)
   def visitJoinExpression(x$1: ShedParser.JoinExpressionContext): Node = ???
+  def visitJoinType(join: ShedParser.JoinTypeContext): Node =
+    join.left.accept(this) -> join.right.accept(this) match {
+      case (left: TypeDef, right: TypeDef) => JoinType(left, right)
+      case _ => throw new Exception("Should not occur.")
+    }
   def visitLabelDecl(x$1: ShedParser.LabelDeclContext): Node = ???
   def visitLabelIdentifier(x$1: ShedParser.LabelIdentifierContext): Node = ???
-  def visitLabelReference(x$1: ShedParser.LabelReferenceContext): Node = ???
+  def visitLabelReference(context: ShedParser.LabelReferenceContext): LabelReference =
+    LabelReference(context.getText())
   def visitModule(x$1: ShedParser.ModuleContext): Node = ???
   def visitModuleDecl(x$1: ShedParser.ModuleDeclContext): Node = ???
   def visitModuleIdentifier(x$1: ShedParser.ModuleIdentifierContext): Node = ???
@@ -166,13 +195,25 @@ class MyVisitor extends ShedVisitor[Node] {
   def visitParameter(x$1: ShedParser.ParameterContext): Node = ???
   def visitParameters(x$1: ShedParser.ParametersContext): Node = ???
   def visitParentheses(x$1: ShedParser.ParenthesesContext): Node = ???
+  def visitParenthesizedType(context: ShedParser.ParenthesizedTypeContext): Node =
+    context.inner.accept(this)
   def visitQualifiedReference(x$1: ShedParser.QualifiedReferenceContext): Node = ???
   def visitShapeDecl(x$1: ShedParser.ShapeDeclContext): Node = ???
   def visitStringLiteral(x$1: ShedParser.StringLiteralContext): Node = ???
-  def visitStructuralType(x$1: ShedParser.StructuralTypeContext): Node = ???
+  def visitStructuralType(context: ShedParser.StructuralTypeContext): Node = {
+    val labels = context.children.asScala
+      .collect { case c: ShedParser.LabelReferenceContext => c }
+      .map(visitLabelReference).toList
+    StructuralType(labels)
+  }
   def visitStructureLiteral(x$1: ShedParser.StructureLiteralContext): Node = ???
-  def visitTypeDef(x$1: ShedParser.TypeDefContext): Node = ???
-  def visitTypeReference(x$1: ShedParser.TypeReferenceContext): Node = ???
+  // def visitTypeDef(x$1: ShedParser.TypeDefContext): Node = ???
+  def visitTypeReference(ref: ShedParser.TypeReferenceContext): Node = {
+    Option(ref.qualifier) match {
+      case Some(qualifier) => QualifiedTypeReference(qualifier.getText(), ref.name.getText())
+      case None => TypeReference(ref.name.getText())
+    }
+  }
   def visitVariableDecl(x$1: ShedParser.VariableDeclContext): Node = ???
   def visitVariableReference(x$1: ShedParser.VariableReferenceContext): Node = ???
 }
