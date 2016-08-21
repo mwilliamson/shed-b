@@ -1,17 +1,24 @@
 grammar Shed;
 
-module: moduleDecl importStmt* moduleStatement* ;
+module: decl=moduleDecl importStatement* moduleStatement* ;
 
-moduleStatement: variableDecl | functionDecl | shapeDecl | labelDecl ;
+moduleStatement
+  : variableDecl
+  | functionDecl
+  | shapeDecl
+  | labelDecl
+  ;
+
 functionStatement
   : variableDecl
   | 'if' '(' expression ')' '{' functionStatement* '}' ( 'else' '{' functionStatement* '}' )?
   | expression ';'
-  | 'return' expression ';' ;
+  | 'return' expression ';'
+  ;
 
-moduleDecl: 'module' moduleIdentifier ';' ;
+moduleDecl: 'module' id=moduleIdentifier ';' ;
 
-importStmt: 'import' ( moduleIdentifier | qualifiedReference ) ';' ;
+importStatement: 'import' ( moduleIdentifier | qualifiedReference ) ';' ;
 
 qualifiedReference: moduleIdentifier identifier ;
 identifier: TypeIdentifier | labelIdentifier | VariableIdentifier ;
@@ -27,7 +34,7 @@ typeDef
   ;
 
 labelReference : moduleIdentifier? labelIdentifier ;
-labelDecl: 'label' labelIdentifier ':' typeDef ';' ;
+labelDecl: 'label' id=labelIdentifier ':' typ=typeDef ';' ;
 labelIdentifier: '.' VariableIdentifier ;
 
 shapeDecl: 'shape' TypeIdentifier '=' typeDef ';' ;
